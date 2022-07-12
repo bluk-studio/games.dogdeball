@@ -1,0 +1,25 @@
+function Game_WaitingStatus_tick():
+  # Checking waiting players
+  loop {game::waiting::*}:
+    if loop-value is offline:
+      remove loop-value from {game::waiting::*}
+
+  if size of {game::waiting::*} >= 4:
+    # Updating waiting status (setting time)
+    {game::time} is not set:
+      set {game::time} to 20
+
+  if {game::time} is set:
+    if size of {game::waiting::*} < 2:
+      delete {game::time}
+    else:
+      if {game::time} <= 0:
+        # Updating game state
+        set {game::nextStatus} to "playing"
+
+      if {game::time} <= 5:
+        loop {game::waiting::*}:
+          if "%{game::time}%" doesn't contain ".":
+            play sound "block.wooden_trapdoor.open" at volume 0.5 with pitch ({game::time}/5) * 2 at loop-value's location for loop-value
+
+      reduce {game::time} by 0.05

@@ -1,0 +1,62 @@
+function Player_PlayingState_tick(player: player):
+  if {%{_player}%::PlayingState::ticked} is not true:
+    set {%{_player}%::PlayingState::ticked} to true
+
+    # Reseting player
+    Helper_resetPlayer({_player})
+
+  # Cleaner
+  if {%{_player}%::state} isn't "playing":
+    delete {bossbar::%{_player}%::*}
+    delete {%{_player}%::PlayingState::*}
+
+  # Checking player's gamemode
+  if {game::player::%{_player}%::isEliminated} is true:
+    if {_player}'s gamemode isn't spectator:
+      set {_player}'s gamemode to spectator
+
+    # Checking distance
+    set {_world} to "world" parsed as world
+    if distance between {_world}'s spawn location and {_player}'s location > 25:
+      teleport {_player} to {game::player::%{_player}%::spawnLocation}
+  else:
+    if {_player}'s gamemode isn't adventure:
+      set {_player}'s gamemode to adventure
+
+  # Inventory
+  Player_PlayingState_updateInventory({_player})
+
+  # Bossbar
+  set {bossbar::%{_player}%::isShown} to true
+
+  # Getting game stage
+  set {_stage} to {game::playing::stage}
+  
+  if {_stage} is "waiting_for_discord":
+    set {bossbar::%{_player}%::progress} to 0
+    set {bossbar::%{_player}%::message} to "&9... &fЖдём, пока все зайдут в голосовой канал"
+  else if {_stage} is "starting":
+    set {_time} to Helper_parseTime({game::time})
+    set {_progress} to ({game::time}/15) * 100
+    
+    set {bossbar::%{_player}%::progress} to {_progress}
+    
+    if {game::playing::roundCount} > 0:
+      set {bossbar::%{_player}%::message} to "&9... &fНачинаем раунд через &7%{_time}%"
+    else:
+      set {bossbar::%{_player}%::message} to "&9... &fНачинаем игру через &7%{_time}%"
+  else if {_stage} is "in_round":
+    # Calculating eliminated count
+    set {_oppositeTeam} to "red" if {game::player::%{_player}%::team} is "blue" else "blue"
+    loop {game::players::*}:
+      if {game::player::%loop-value%::team} is {_oppositeTeam}:
+        if {game::player::%loop-value%::isEliminated} is true:
+          add 1 to {_eliminated}
+
+    if {_eliminated} is not set:
+      set {_eliminated} to 0
+
+    set {_progress} to ({_eliminated}/{game::team::%{_oppositeTeam}%::playerCount}) * 100
+
+    set {bossbar::%{_player}%::progress} to {_progress}
+    set {bossbar::%{_player}%::message} to "&c⚔ &fИдёт раунд. Убейте всех! &7(%{game::team::%{_oppositeTeam}%::playerCount} - {_eliminated}%/%{game::team::%{_oppositeTeam}%::playerCount}% врагов)"

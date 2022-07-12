@@ -1,0 +1,153 @@
+function Game_PlayingStatus_tick():
+  # First tick
+  if {game::PlayingStatus::ticked} is not true:
+    set {game::PlayingStatus::ticked} to true
+
+    # Clearing timer
+    delete {game::time}
+
+    Game_PlayingStatus_firstTick()
+
+  # Checking "playing" stage
+  if {game::playing::stage} is not set:
+    # Determining first stage
+    loop {game::players::*}:
+      set {_player} to loop-value
+      if {%{_player}%::discord::isConnected} is true:
+        if {%{_player}%::discord::isConnectedToVoiceChat} is not true:
+          set {game::playing::stage} to "waiting_for_discord"
+          exit 1 loop
+
+    if {game::playing::stage} is not set:
+      set {game::playing::stage} to "starting"
+
+  set {_stage} to {game::playing::stage}
+  if {_stage} is "waiting_for_discord":
+    # +todo
+  else if {_stage} is "starting":
+    if {game::starting::ticked} is not true:
+      set {game::starting::ticked} to true
+
+      # Clearing inRound info
+      delete {game::inRound::*}
+
+      loop "red", "blue":
+        delete {_players::*}
+
+        set {_team} to loop-value
+        loop {game::players::*}:
+          if {game::player::%loop-value-2%::team} is {_team}:
+            add loop-value-2 to {_players::*}
+
+        # Respawning players
+        loop {_players::*}:
+          set {_player} to loop-value-2
+          set {game::player::%{_player}%::isEliminated} to false
+          delete {game::player::%{_player}%::isShooting}
+
+          if {game::playing::roundCount} is set:
+            # Animation
+            
+            # Potion
+            apply potion of blindness of tier 4 to {_player} for 2 seconds 
+
+          set {_location} to {game::player::%{_player}%::spawnLocation}
+          if {_location} is not set:
+            set {_fallbackLocation} to random element of {arena::team::%{_team}%::spawnLocations::*}
+          
+          teleport {_player} to {_location}
+
+        # Clearing availableShots
+        delete {game::team::%{_team}%::availableShots}
+
+    # Checking starting timer
+    if {game::time} is not set:
+      set {game::time} to 15
+
+    if {game::time} <= 0:
+      # Changing stage
+      set {game::playing::stage} to "in_round"
+
+    if {game::time} <= 5:
+      loop {game::players::*}:
+        if "%{game::time}%" doesn't contain ".":
+          play sound "block.wooden_trapdoor.open" at volume 0.5 with pitch ({game::time}/5) * 2 at loop-value's location for loop-value
+
+    reduce {game::time} by 0.05
+  else if {_stage} is "in_round":
+    # Checking if we need to choose 
+    delete {game::starting::ticked}
+
+    if {game::inRound::ticked} is not true:
+      set {game::inRound::ticked} to true
+
+      # Determining which team should get first two shots
+      Game_PlayingStatus_distributeShots()
+
+  # Checking eliminated states
+  loop "blue", "red":
+    delete {_players::*}
+    delete {_eliminated}
+
+    set {_team} to loop-value
+    set {_oppositeTeam} to "red" if {_team} is "blue" else "blue" 
+
+    loop {game::players::*}:
+      if {game::player::%loop-value-2%::team} is {_team}:
+        add loop-value-2 to {_players::*}
+
+        if {game::player::%loop-value-2%::isEliminated} is true:
+          add 1 to {_eliminated}
+
+    if {_eliminated} >= size of {_players::*}:
+      # Updating variables
+      add 1 to {game::playing::roundCount}
+      add 1 to {game::team::%{_oppositeTeam}%::wonRounds}
+
+      if {game::team::%{_oppositeTeam}%::wonRounds} >= 3:
+        if {game::playing::settedWinnerAction} is not true:
+          set {game::playing::settedWinnerAction} to true
+          set {game::action} to "winner-%{_oppositeTeam}%"
+        stop
+
+      # Ending round
+      set {game::time} to 3.5
+      set {game::playing::stage} to "starting"
+
+  # Checking online players
+  loop {game::players::*}:
+    set {_player} to loop-value
+    set {_team} to {game::player::%{_player}%::team}
+    set {_oppositeTeam} to "red" if {_team} is "blue" else "blue" 
+
+    if {_player} is offline:
+      remove {_player} from {game::players::*}
+      remove 1 from {game::team::%{_team}%::playerCount}
+
+    if {game::player::%{_player}%::isEliminated} is true:
+      add 1 to {_eliminated}
+
+    if {game::team::%{_team}%::playerCount} <= 0:
+      # Ending game
+      # +todo messages
+      set {game::action} to "winner-%{_oppositeTeam}%"
+
+      stop
+
+    # Checking if player is trying to cross barrier
+    if {_team} is "red":
+      if z coordinate of {_player} > 0:
+        # Pushing to the center
+        set {_center} to location at 0.5, 66, -7 in world "world"
+
+        push {_player} direction from {_player} to {_center} with force 0.25
+    else if {_team} is "blue":
+      if z coordinate of {_player} < 0:
+        # Pushing to the center
+        set {_center} to location at 0.5, 66, 7 in world "world"
+
+        push {_player} direction from {_player} to {_center} with force 0.25
+
+  if {game::playing::roundCount} is not set:
+    set {game::playing::roundCount} to 0
+  add 0.05 to {game::timeElapsed}

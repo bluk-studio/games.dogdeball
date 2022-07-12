@@ -1,0 +1,40 @@
+function Player_SpectatingState_tick(player: player):
+  if {%{_player}%::SpectatingState::ticked} is not true:
+    set {%{_player}%::SpectatingState::ticked} to true
+
+    # Teleporting player to playing area
+    if {%{_player}%::previousState} is not set:
+      set {_world} to "world" parsed as world
+      
+      set {_location} to location at 0.5, 70, -32 in world "world"
+      teleport {_player} to {_location}
+
+    # Reseting player
+    Helper_resetPlayer({_player})
+
+  # Cleaner
+  if {%{_player}%::state} isn't "spectating":
+    delete {bossbar::%{_player}%::*}
+    delete {%{_player}%::SpectatingState::*}
+
+  # Checking player's gamemode 
+  if {_player}'s gamemode isn't adventure:
+    set {_player}'s gamemode to adventure
+
+  # Checking distance between player and main playing area
+  set {_world} to "world" parsed as world
+  set {_location} to location at 0.5, 70, -32 in world "world"
+  if distance between {_player} and {_location} >= 50:
+    teleport {_player} to {_location}
+
+  # Checking game status
+  if {game::status} isn't "playing":
+    set {%{_player}%::nextState} to "in_lobby"
+
+  # Bossbar
+  set {bossbar::%{_player}%::isShown} to true
+
+  set {_time} to Helper_parseTime({game::timeElapsed})
+
+  set {bossbar::%{_player}%::progress} to 100
+  set {bossbar::%{_player}%::message} to "&c &fИдёт игра &7(%{_time}%, раунд №%{game::playing::roundCount}%)"

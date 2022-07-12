@@ -1,0 +1,79 @@
+function Game_startWorker():
+  # Clearing
+  delete {game::*}
+
+  # Resetting arena
+  Game_resetArena()
+
+  # Starting worker
+  while true is true:
+    # Default status
+    # waiting, playing
+    if {_status} is not set:
+      set {_status} to "waiting"
+
+    # Updating status
+    if {game::nextStatus} is set:
+      set {_status} to {game::nextStatus}
+      delete {game::nextStatus}
+
+    # Status-related ticks
+    if {_status} is "waiting":
+      Game_WaitingStatus_tick()
+    else if {_status} is "playing":
+      Game_PlayingStatus_tick()
+
+    # Worker action
+    if {game::action} is set:
+      set {_action} to {game::action}
+      delete {game::action}
+
+      broadcast "action: %{_action}%"
+
+      # > Action: stop
+      if {_action} is "stop":
+        loop all players:
+          set {%loop-value%::nextState} to "in_lobby"
+
+        delete {game::*}
+        stop
+
+      # > Action: Winner
+      else if {_action} contains "winner":
+        broadcast "contains winner"
+        set {_temp::*} to {_action} split at "-"
+        set {_team} to {_temp::2}
+
+        broadcast "winner: %{_team}%"
+
+        set {game::action} to "end"
+
+      # > Action: End sequence
+      else if {_action} is "end":
+        # Updating players' states
+        loop all players:
+          set {%loop-value%::nextState} to "in_lobby"
+
+        # Resetting variables
+        delete {game::*}
+
+        # Resetting arena
+        Game_resetArena()
+
+        # Waiting status
+        set {_status} to "waiting"
+
+    # Keeping game-related variables in sync
+    set {game::status} to {_status}
+
+    wait 1 tick
+
+on load:
+  wait 2 seconds
+
+  # Starting worker
+  Game_startWorker()
+
+on unload:
+  # Stoping worker
+  set {game::action} to "stop"

@@ -1,0 +1,43 @@
+function Player_InLobbyState_tick(player: player):
+  if {%{_player}%::InLobbyState::ticked} is not true:
+    set {%{_player}%::InLobbyState::ticked} to true
+
+    # Teleporting player to playing area
+    set {_location} to location at 0.5, 70, -32 in world "world"
+    teleport {_player} to {_location}
+
+    # Reset player
+    Helper_resetPlayer({_player})
+
+  # Cleaner
+  if {%{_player}%::state} isn't "in_lobby":
+    delete {bossbar::%{_player}%::*}
+    delete {%{_player}%::InLobbyState::*}
+
+  # Checking player's gamemode
+  if {_player}'s gamemode isn't adventure:
+    set {_player}'s gamemode to adventure
+
+  # Bossbar information
+  set {bossbar::%{_player}%::isShown} to true
+
+  if {game::waiting::*} contains {_player}:
+    # Getting information
+    set {_size} to size of {game::waiting::*}
+
+    if {game::time} is set:
+      set {_time} to Helper_parseTime({game::time})
+      set {_progress} to {game::time}/20 * 100
+
+      set {bossbar::%{_player}%::message} to "&a &fНачинаем игру через &a%{_time}% &7(%{_size}%/4 игроков)"
+    else:
+      set {_progress} to ({_size}/4) * 100
+      set {bossbar::%{_player}%::message} to "&9... &fОжидаем игроков &7(%{_size}%/4 игроков)"
+
+    set {bossbar::%{_player}%::progress} to {_progress} if {_progress} <= 100 else 100
+  else:
+    set {bossbar::%{_player}%::progress} to 0
+    set {bossbar::%{_player}%::message} to "&cx &fВы не вошли в очередь"
+
+  # Inventory
+  Player_InLobbyState_updateInventory({_player})

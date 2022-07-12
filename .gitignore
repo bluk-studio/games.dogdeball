@@ -1,0 +1,17 @@
+# PaperMC-related
+cache
+libraries
+versions
+logs
+
+# Config-related
+banned-ips.json
+banned-players.json
+ops.json
+usercache.json
+version_history.json
+
+# World-related
+playerdata
+datapacks
+data

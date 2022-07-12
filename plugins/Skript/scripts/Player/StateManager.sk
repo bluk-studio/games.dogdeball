@@ -1,0 +1,60 @@
+function Player_startStateManager(player: player):
+  # Starting state manager
+  while true is true:
+    if {_player} is offline:
+      delete {%{_player}%::*}
+      stop
+
+    # Getting current player state
+    set {_state} to {%{_player}%::state}
+
+    if Player_getAvailableStates() doesn't contain {_state}:
+      # Checking game status
+      if {game::status} is "playing":
+        set {_state} to "spectating"
+      else:
+        set {_state} to "in_lobby"
+
+    # 
+    # Previous state system
+    if {_state} isn't {_previousState}:
+      set {_nextState} to {_state}
+      set {_state} to {_previousState}
+
+      set {%{_player}%::state} to {_nextState}
+    else:
+      if {%{_player}%::nextState} is set:
+        set {_nextState} to {%{_player}%::nextState}
+        delete {%{_player}%::nextState}
+
+        set {%{_player}%::state} to {_nextState}
+
+    # Global ticks
+    Player_bossbarTick({_player})
+    Player_ScoreboardTick({_player})
+
+    # State-related workers (ticks)
+    if {_state} is "in_lobby":
+      Player_InLobbyState_tick({_player})
+    else if {_state} is "playing":
+      Player_PlayingState_tick({_player})
+    else if {_state} is "spectating":
+      Player_SpectatingState_tick({_player})
+
+    # Updating states
+    if {_nextState} is set:
+      set {_state} to {_nextState}
+      set {_previousState} to {_state}
+
+    # Updating state
+    set {%{_player}%::state} to {_state}
+    set {%{_player}%::previousState} to {_previousState}
+
+    wait 1 tick
+
+function Player_getAvailableStates() :: strings:
+  return "in_lobby", "spectating", "playing", "none"
+
+command state [<string>]:
+  trigger:
+    set {%player%::nextState} to arg-1

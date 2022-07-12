@@ -1,0 +1,13 @@
+function Helper_getSlotsForItems(length: number) :: numbers:
+  if {_length} is 1:
+    return 4
+  else if {_length} is 2:
+    return 3, 5
+
+function Helper_setHotbarInventory(player: player, items: items):
+  set {_slots::*} to Helper_getSlotsForItems(size of {_items::*})
+  loop {_slots::*}:
+    set {_item} to first element of {_items::*}
+    remove {_item} from {_items::*}
+
+    set slot loop-value of {_player}'s inventory to {_item}

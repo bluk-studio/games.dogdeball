@@ -1,0 +1,42 @@
+function Player_ScoreboardTick(player: player):
+  if {%{_player}%::state} is "playing":
+    toggle scoreboard of {_player} on
+
+    # Getting player information
+    set {_team} to {game::player::%{_player}%::team}
+    
+    set {_eliminated} to 0
+    loop {game::players::*}:
+      {game::player::%loop-value%::team} is {_team}:
+        {game::player::%loop-value%::isEliminated} is true:
+          add 1 to {_eliminated}
+
+    # Visual stuff
+    set {_team::visual} to "Красные" if {_team} is "red" else "Синие"
+
+    set {_redTeam::wonRounds} to 0 if {game::team::red::wonRounds} is not set else {game::team::red::wonRounds}
+    set {_blueTeam::wonRounds} to 0 if {game::team::blue::wonRounds} is not set else {game::team::blue::wonRounds}
+
+    # Scoreboard itself
+    set title of {_player}'s scoreboard to "Dodgeball"
+
+    # Player/Team info
+    add "&f" to {_lines::*}
+    add "&e♕ &fКоманда: &f%{_team::visual}% &7(%{game::team::%{_team}%::playerCount} - {_eliminated}%/%{game::team::%{_team}%::playerCount}%)" to {_lines::*}
+    add "&f" to {_lines::*}
+
+    # Rounds
+    add "&e⚔ &fРаунды:" to {_lines::*}
+    add "&f" to {_lines::*}
+    add "   &cКрасные &f%{_redTeam::wonRounds}%/3" to {_lines::*}
+    add "   &9Синие &f%{_blueTeam::wonRounds}%/3" to {_lines::*}
+    add "&f" to {_lines::*}
+
+    # Setting lines
+    set {_lineNumber} to size of {_lines::*}
+    loop {_lines::*}:
+      set line {_lineNumber} of {_player}'s scoreboard to loop-value
+      
+      remove 1 from {_lineNumber}
+  else:
+    toggle scoreboard of {_player} off

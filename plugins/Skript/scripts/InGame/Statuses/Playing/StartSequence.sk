@@ -1,0 +1,15 @@
+function Game_PlayingStatus_enterArena(player: player):
+  # Getting player team
+  set {_team} to {game::player::%{_player}%::team}
+  if {_team} is not set:
+    set {%{_player}%::nextState} to "spectating"
+    stop
+
+  # CLearing player's inventory
+  clear {_player}'s inventory
+
+  set {%{_player}%::nextState} to "playing"
+
+on jump:
+  if {%player%::noJump} is true:
+    cancel event

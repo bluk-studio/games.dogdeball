@@ -1,0 +1,9 @@
+on respawn:
+  if {%player%::state} is "in_lobby":
+    set {_location} to location at 0.5, 70, -32 in world "world"
+    teleport player to {_location}
+
+on damage:
+  if {%victim%::state} is "in_lobby":
+    if damage cause isn't void:
+      cancel event

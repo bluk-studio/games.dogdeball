@@ -1,0 +1,33 @@
+function Player_InLobbyState_updateInventory(player: player):
+  # Checking game status
+  if {game::status} isn't "playing":
+    # Checking if player is in waiting line or no
+    if {game::waiting::*} contains {_player}:
+      # Getting information
+  
+      set {_leave} to player head named "&c<- &fВыйти из очереди"
+      add "{SkullOwner:{Id:""2e9a87e9-fdde-4497-988f-d7db843014cd"",Properties:{textures:[{Value:""eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvNmFkOTg5ZjhhYjU1YzdmYTFjOWJkOTVlNTFjYThlNjg4ZTVjZjFmNzY4MmU1MGVhZmRlYjM1MWRhMGY2YWFlMCJ9fX0=""}]}}}" to item-nbt of {_leave}
+
+      add {_leave} to {_items::*}
+    else:
+      set {_join} to player head named "&a-> &fВойти в очередь"
+      add "{SkullOwner:{Id:""cdbf24ed-b088-4588-9834-48ba7de737bd"",Properties:{textures:[{Value:""eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvOTYzMzlmZjJlNTM0MmJhMThiZGM0OGE5OWNjYTY1ZDEyM2NlNzgxZDg3ODI3MmY5ZDk2NGVhZDNiOGFkMzcwIn19fQ==""}]}}}" to item-nbt of {_join}
+
+      add {_join} to {_items::*}
+
+  set {_discord} to player head named "&9 &fПодключить Дискорд"
+  add "{SkullOwner:{Id:""1f8799da-5364-4580-96de-4357806fed3d"",Properties:{textures:[{Value:""eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly90ZXh0dXJlcy5taW5lY3JhZnQubmV0L3RleHR1cmUvYWQ4MzNiNTE1NjY1NjU2NThmOTAxMWRlODc4NGU5MGMxYWQ5YmE1ZDMzMzdmOGMwNjkyMTNiYmRlZTk4NjUyMyJ9fX0=""}]}}}" to item-nbt of {_discord}
+
+  add {_discord} to {_items::*}
+
+  Helper_setHotbarInventory({_player}, {_items::*})
+
+on click:
+  if {%player%::state} is "in_lobby":
+    if name of player's held item contains "Войти в очередь":
+      # Adding player to waiting list
+      {game::status} isn't "playing"
+      add player to {game::waiting::*}
+    else if name of player's held item contains "Выйти из очереди":
+      {game::status} isn't "playing":
+      remove player from {game::waiting::*}

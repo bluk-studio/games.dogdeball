@@ -1,0 +1,13 @@
+function Helper_parseTime(seconds: number) :: string:
+  set {_timespan} to "%rounded {_seconds}% seconds" parsed as timespan
+  set {_time} to "%{_timespan}%"
+
+  replace all "minutes" in {_time} with "м."
+  replace all "minute" in {_time} with "м."
+
+  replace all "seconds" in {_time} with "с."
+  replace all "second" in {_time} with "с."
+
+  replace all " and " in {_time} with " "
+
+  return {_time}

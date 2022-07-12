@@ -1,0 +1,67 @@
+function Game_PlayingStatus_firstTick():
+  # Getting first 8 waiting players
+  loop 8 times:
+    set {_player} to first element of {game::waiting::*}
+    remove {_player} from {game::waiting::*}
+    add {_player} to {game::players::*}
+
+  # Distributing players between two commands
+  set {_currentTeam} to "red"
+  set {_players::*} to {game::players::*}
+  loop size of {game::players::*} times:
+    set {_player} to random element of {_players::*}
+    remove {_player} from {_players::*}
+
+    if {_currentTeam} is "red":
+      # Adding to blue team
+      set {game::player::%{_player}%::team} to "blue"
+      set {_currentTeam} to "blue"
+    else:
+      # Adding to red team
+      set {game::player::%{_player}%::team} to "red"
+      set {_currentTeam} to "red"
+
+  # Teleporting players into map
+  loop "red", "blue":
+    # Clearing
+    delete {_players::*}
+    delete {_locations::*}
+
+    set {_team} to loop-value
+
+    # Getting locations
+    set {_locations::*} to {arena::team::%{_team}%::spawnLocations::*}
+    set {_fallbackLocation} to first element of {_locations::*}
+
+    # Getting team players
+    loop {game::players::*}:
+      if {game::player::%loop-value-2%::team} is {_team}:
+        add loop-value-2 to {_players::*}
+
+    # Teleporting
+    loop {_players::*}:
+      # Clearing
+      delete {_location}
+
+      set {_player} to loop-value-2
+
+      # Getting random location
+      set {_location} to random element of {_locations::*}
+      remove {_location} from {_locations::*}
+
+      teleport {_player} to {_location} if {_location} is set else {_fallbackLocation}
+      set {game::player::%{_player}%::spawnLocation} to {_location}
+
+      # Starting
+      Game_PlayingStatus_enterArena({_player})
+
+    # Team variables
+    set {game::team::%{_team}%::playerCount} to size of {_players::*}
+
+  # Updating all other player's states
+  loop all players:
+    if {game::players::*} doesn't contain loop-player:
+      set {%loop-player%::nextState} to "spectating"
+
+      # Sending message
+      show toast to loop-player titled "&cИгра переполнена. &fВам придётся подождать." with icon red concrete using frame task

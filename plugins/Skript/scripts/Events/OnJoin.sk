@@ -1,0 +1,12 @@
+on join:
+  set join message to ""
+  delete {%player%::*}
+  
+  wait 1 tick
+
+  # Starting state manager
+  Player_startStateManager(player)
+
+on quit:
+  set quit message to ""
+  delete {%player%::*}

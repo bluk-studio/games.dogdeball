@@ -1,0 +1,85 @@
+on right click:
+  {%player%::state} is "playing":
+    {game::player::%player%::isEliminated} is not true
+    if name of player's held item contains "Выстрелов доступно":
+      # Getting team info and availableShots info
+      set {_team} to {game::player::%player%::team}
+      set {_availableShots} to {game::team::%{_team}%::availableShots}
+
+      if {_availableShots} > 0:
+        reduce {game::team::%{_team}%::availableShots} by 1
+
+        # Notifying team players
+        loop {game::players::*}:
+          if {game::player::%loop-value%::team} is {_team}:
+            send title "" with subtitle "%player% использовал &71 выстрел" to loop-value for 1 seconds with fade in 0 ticks and fade out 2 ticks
+
+        # Updating player info
+        set {game::player::%player%::isShooting} to true
+
+        # if block below player is carpet:
+        #   # Pushing player into air
+        #   push player upwards with force 0.5
+
+        #   wait 0.25 seconds
+
+        #   # Making player fly
+        #   force player to fly
+
+        #   set {game::player::%player%::shootingLocation} to player's location
+
+on shoot:
+  # Getting team info
+  set {_team} to {game::player::%shooter%::team}
+  if {_team} is not set:
+    stop
+
+  # Disabling isShooting stance
+  delete {game::player::%shooter%::isShooting}
+  delete {game::player::%shooter%::shootingLocation}
+
+  make shooter stop flying
+
+  # Adding availableShot to enemy team
+  set {_oppositeTeam} to "red" if {_team} is "blue" else "blue"
+  add 1 to {game::team::%{_oppositeTeam}%::availableShots}
+
+on damage:
+  if {%victim%::state} is "playing":
+    cancel event
+
+    damage cause is not projectile:
+      stop
+
+    if {game::player::%victim%::team} is {game::player::%attacker%::team}:
+      stop
+
+    # Notifying
+    set {_team} to {game::player::%victim%::team}
+    set {_team::visual} to "&cКрасный" if {_team} is "red" else "&9Синий"
+    
+    set {game::player::%victim%::isEliminated} to true
+    delete {game::player::%victim%::isShooting}
+
+    if {game::player::%victim%::isShooting} is true:
+      set {_oppositeTeam} to "red" if {_team} is "blue" else "blue"
+      add 1 to {game::team::%{_oppositeTeam}%::availableShots}
+
+    # Effects
+    play 50 totem on victim
+
+    # Notification
+    loop {game::players::*}:
+      set {_player} to loop-value
+      if {game::player::%loop-value%::team} is {_team}:
+        send title "&a⚔" with subtitle "&a%victim% &7(%{_team::visual}%&7) &fубит" to {_player} for 1.5 seconds with fade in 0 ticks and fade out 2 ticks
+        play sound "entity.fox.death" at volume 0.5 with pitch 1.8 at {_player}'s location for {_player}
+      else:
+        send title "&c⚔" with subtitle "&c%victim% &7(%{_team::visual}%&7) &fубит" to {_player} for 1.5 seconds with fade in 0 ticks and fade out 2 ticks
+        play sound "block.note_block.bell" at volume 0.5 with pitch 0 at {_player}'s location for {_player}
+
+on player move:
+  if {game::player::%player%::isShooting} is true:
+    {game::player::%player%::shootingLocation} is set
+    if distance between player and {game::player::%player%::shootingLocation} >= 0.25:
+      teleport player to {game::player::%player%::shootingLocation}

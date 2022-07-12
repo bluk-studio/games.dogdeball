@@ -1,0 +1,22 @@
+on script load:
+  delete {arena::team::*}
+
+  # Red team spawn locations
+  add location at -4.5, 66, -6 in world "world" to {arena::team::red::spawnLocations::*}
+  add location at 0.5, 66, -2.5 in world "world" to {arena::team::red::spawnLocations::*}
+  add location at 5.5, 66, -6 in world "world" to {arena::team::red::spawnLocations::*}
+  add location at 0.5, 66, -10.5 in world "world" to {arena::team::red::spawnLocations::*}
+  add location at 0.5, 66, -6.5 in world "world" to {arena::team::red::spawnLocations::*}
+
+  loop {arena::team::red::spawnLocations::*}:
+    set loop-value's yaw to 0
+
+  # Blue team spawn locations
+  add location at 0.5, 66, 3.5 in world "world" to {arena::team::blue::spawnLocations::*}
+  add location at -4.5, 66, 7.5 in world "world" to {arena::team::blue::spawnLocations::*}
+  add location at 0.5, 66, 11.5 in world "world" to {arena::team::blue::spawnLocations::*}
+  add location at 5.5, 66, 7.5 in world "world" to {arena::team::blue::spawnLocations::*}
+  add location at 0.5, 66, 7.5 in world "world" to {arena::team::blue::spawnLocations::*}
+
+  loop {arena::team::blue::spawnLocations::*}:
+    set loop-value's yaw to -180
